@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>MIG.Protocols</id>
+        <version>$version$</version>
+        <title>Protocols Interface (UPnP)</title>
+        <authors>Generoso Martello</authors>
+        <owners>G-Labs</owners>
+        <licenseUrl>https://github.com/genielabs/mig-protocols/blob/master/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/genielabs/mig-protocols/</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Interface for MIG service that adds API commands for controlling UPnP devices.</description>
+        <summary>HomeAutomation interface for MIG (UPnP)</summary>
+        <releaseNotes></releaseNotes>
+        <copyright>G-Labs</copyright>
+        <tags>mig interface mig-service protocols upnp</tags>
+        <dependencies>
+            <dependency id="MIG" version="1.0.5" />
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="bin\Debug\MIG.HomeAutomation.dll" target="lib\MIG.HomeAutomation.dll" />
+        <file src="bin\Debug\UPnP.dll" target="lib\UPnP.dll" />
+    </files>
+</package>
+
