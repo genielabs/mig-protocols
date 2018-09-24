@@ -9,7 +9,8 @@
         <licenseUrl>https://github.com/genielabs/mig-protocols/blob/master/LICENSE</licenseUrl>
         <projectUrl>https://github.com/genielabs/mig-protocols/</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>Interface for MIG service that adds API commands for controlling UPnP devices.</description>
+        <description>Interface for MIG service that adds commands for controlling UPnP devices.
+https://genielabs.github.io/HomeGenie/api/mig/mig_api_upnp.html</description>
         <summary>HomeAutomation interface for MIG (UPnP)</summary>
         <releaseNotes></releaseNotes>
         <copyright>G-Labs</copyright>
@@ -19,7 +20,7 @@
         </dependencies>
     </metadata>
     <files>
-        <file src="bin\Debug\MIG.HomeAutomation.dll" target="lib\MIG.HomeAutomation.dll" />
+        <file src="bin\Debug\MIG.Protocols.dll" target="lib\MIG.Protocols.dll" />
         <file src="bin\Debug\UPnP.dll" target="lib\UPnP.dll" />
     </files>
 </package>
