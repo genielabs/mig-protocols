@@ -21,4 +21,4 @@ Implemented API:
 
 ## License
 
-This project is open source software, licensed under the terms of Apache license 2.0. See the [LICENSE](LICENSE) file for details.
+This project is open source software, licensed under the terms of Apache License 2.0. See the [LICENSE](LICENSE) file for details.
