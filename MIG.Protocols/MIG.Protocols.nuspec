@@ -17,11 +17,11 @@ https://genielabs.github.io/HomeGenie/api/mig/mig_api_upnp.html</description>
         <tags>mig interface mig-service protocols upnp</tags>
         <dependencies>
             <dependency id="MIG" version="1.1.6" />
+            <dependency id="UPnP" version="1.0.0" />
         </dependencies>
     </metadata>
     <files>
         <file src="bin\Debug\MIG.Protocols.dll" target="lib\MIG.Protocols.dll" />
-        <file src="bin\Debug\UPnP.dll" target="lib\UPnP.dll" />
     </files>
 </package>
 
