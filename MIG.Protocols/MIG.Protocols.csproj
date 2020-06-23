@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>MIG.Protocols</RootNamespace>
     <AssemblyName>MIG.Protocols</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <ReleaseVersion>1.0</ReleaseVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -37,7 +37,7 @@
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="MIG, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\MIG.1.1.6\lib\MIG.dll</HintPath>
+      <HintPath>..\packages\MIG.1.1.7\lib\MIG.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
@@ -62,8 +62,9 @@
       <HintPath>..\packages\UDE.CSharp.1.1.0\lib\Ude.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="UPnP">
-      <HintPath>Externals\upnp\UPnP.dll</HintPath>
+    <Reference Include="UPnP, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\UPnP.1.0.0\lib\netstandard2.0\UPnP.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="websocket-sharp, Version=1.0.1.0, Culture=neutral, PublicKeyToken=5660b08a1845a91e">
       <HintPath>..\packages\WebSocketSharp-netstandard.1.0.1\lib\net45\websocket-sharp.dll</HintPath>

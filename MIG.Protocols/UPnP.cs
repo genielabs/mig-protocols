@@ -1,6 +1,6 @@
 ﻿/*
   This file is part of MIG (https://github.com/genielabs/mig-service-dotnet)
- 
+
   Copyright (2012-2018) G-Labs (https://github.com/genielabs)
 
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,7 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using System.Threading;
 using MIG.Config;
+using EventLogEntryType = OpenSource.Utilities.EventLogEntryType;
 
 namespace MIG.Interfaces.Protocols
 {
@@ -199,7 +200,7 @@ namespace MIG.Interfaces.Protocols
                 {
                     bool commandValue = (command == Commands.Control_On ? true : false);
                     var newValue = new UPnPArgument("newTargetValue", commandValue);
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         newValue
                     };
                     InvokeUpnpDeviceService(device, "SwitchPower", "SetTarget", args);
@@ -212,7 +213,7 @@ namespace MIG.Interfaces.Protocols
             case Commands.Control_Level:
                 {
                     var newvalue = new UPnPArgument("NewLoadLevelTarget", (byte)uint.Parse(request.GetOption(0)));
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         newvalue
                     };
                     InvokeUpnpDeviceService(device, "Dimming", "SetLoadLevelTarget", args);
@@ -242,7 +243,7 @@ namespace MIG.Interfaces.Protocols
                     var totalMatches = new UPnPArgument("TotalMatches", "");
                     var updateId = new UPnPArgument("UpdateID", "");
                     //
-                    InvokeUpnpDeviceService(device, "ContentDirectory", "Browse", new UPnPArgument[] { 
+                    InvokeUpnpDeviceService(device, "ContentDirectory", "Browse", new UPnPArgument[] {
                         objectId,
                         flags,
                         filter,
@@ -284,7 +285,7 @@ namespace MIG.Interfaces.Protocols
                     var totalMatches = new UPnPArgument("TotalMatches", "");
                     var updateId = new UPnPArgument("UpdateID", "");
                     //
-                    InvokeUpnpDeviceService(device, "ContentDirectory", "Browse", new UPnPArgument[] { 
+                    InvokeUpnpDeviceService(device, "ContentDirectory", "Browse", new UPnPArgument[] {
                         objectId,
                         flags,
                         filter,
@@ -335,7 +336,7 @@ namespace MIG.Interfaces.Protocols
                     var totalMatches = new UPnPArgument("TotalMatches", "");
                     var updateId = new UPnPArgument("UpdateID", "");
                     //
-                    InvokeUpnpDeviceService(device, "ContentDirectory", "Browse", new UPnPArgument[] { 
+                    InvokeUpnpDeviceService(device, "ContentDirectory", "Browse", new UPnPArgument[] {
                         objectId,
                         flags,
                         filter,
@@ -377,7 +378,7 @@ namespace MIG.Interfaces.Protocols
                     var transportState = new UPnPArgument("CurrentTransportState", "");
                     var transportStatus = new UPnPArgument("CurrentTransportStatus", "");
                     var currentSpeed = new UPnPArgument("CurrentSpeed", "");
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         instanceId,
                         transportState,
                         transportStatus,
@@ -406,7 +407,7 @@ namespace MIG.Interfaces.Protocols
                     var playMedium = new UPnPArgument("PlayMedium", "");
                     var recordMedium = new UPnPArgument("RecordMedium", "");
                     var writeStatus = new UPnPArgument("WriteStatus", "");
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         instanceId,
                         nrTracks,
                         mediaDuration,
@@ -446,7 +447,7 @@ namespace MIG.Interfaces.Protocols
                     var absoluteTime = new UPnPArgument("AbsTime", "");
                     var relativeCount = new UPnPArgument("RelCount", (uint)0);
                     var absoluteCount = new UPnPArgument("AbsCount", (uint)0);
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         instanceId,
                         currentTrack,
                         trackDuration,
@@ -478,7 +479,7 @@ namespace MIG.Interfaces.Protocols
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var currentUri = new UPnPArgument("CurrentURI", request.GetOption(0));
                     var uriMetadata = new UPnPArgument("CurrentURIMetaData", "");
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         instanceId,
                         currentUri,
                         uriMetadata
@@ -490,7 +491,7 @@ namespace MIG.Interfaces.Protocols
                 {
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var speed = new UPnPArgument("Speed", "1");
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         instanceId,
                         speed
                     };
@@ -500,7 +501,7 @@ namespace MIG.Interfaces.Protocols
             case Commands.AvMedia_Pause:
                 {
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         instanceId
                     };
                     InvokeUpnpDeviceService(device, "AVTransport", "Pause", args);
@@ -511,7 +512,7 @@ namespace MIG.Interfaces.Protocols
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var unit = new UPnPArgument("Unit", "REL_TIME");
                     var target = new UPnPArgument("Target", request.GetOption(0));
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         instanceId,
                         unit,
                         target
@@ -522,7 +523,7 @@ namespace MIG.Interfaces.Protocols
             case Commands.AvMedia_Stop:
                 {
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         instanceId
                     };
                     InvokeUpnpDeviceService(device, "AVTransport", "Stop", args);
@@ -531,7 +532,7 @@ namespace MIG.Interfaces.Protocols
             case Commands.AvMedia_Prev:
                 {
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         instanceId
                     };
                     InvokeUpnpDeviceService(device, "AVTransport", "Previous", args);
@@ -540,7 +541,7 @@ namespace MIG.Interfaces.Protocols
             case Commands.AvMedia_Next:
                 {
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         instanceId
                     };
                     InvokeUpnpDeviceService(device, "AVTransport", "Next", args);
@@ -551,7 +552,7 @@ namespace MIG.Interfaces.Protocols
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var channel = new UPnPArgument("Channel", "Master");
                     var currentMute = new UPnPArgument("CurrentMute", "");
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         instanceId,
                         channel,
                         currentMute
@@ -565,7 +566,7 @@ namespace MIG.Interfaces.Protocols
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var channel = new UPnPArgument("Channel", "Master");
                     var mute = new UPnPArgument("DesiredMute", request.GetOption(0) == "1" ? true : false);
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         instanceId,
                         channel,
                         mute
@@ -578,7 +579,7 @@ namespace MIG.Interfaces.Protocols
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var channel = new UPnPArgument("Channel", "Master");
                     var currentVolume = new UPnPArgument("CurrentVolume", "");
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         instanceId,
                         channel,
                         currentVolume
@@ -592,7 +593,7 @@ namespace MIG.Interfaces.Protocols
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var channel = new UPnPArgument("Channel", "Master");
                     var volume = new UPnPArgument("DesiredVolume", UInt16.Parse(request.GetOption(0)));
-                    var args = new UPnPArgument[] { 
+                    var args = new UPnPArgument[] {
                         instanceId,
                         channel,
                         volume
@@ -848,7 +849,7 @@ namespace MIG.Interfaces.Protocols
                         {
                             OnInterfacePropertyChanged(this.GetDomain(), device.UniqueDeviceName, "UPnP " + device.FriendlyName, "Widget.DisplayModule", "homegenie/generic/link");
                             OnInterfacePropertyChanged(this.GetDomain(), device.UniqueDeviceName, "UPnP " + device.FriendlyName, "FavouritesLink.Url", device.PresentationURL);
-                        }               
+                        }
                         if (!String.IsNullOrWhiteSpace(device.DeviceURN))
                             OnInterfacePropertyChanged(this.GetDomain(), device.UniqueDeviceName, "UPnP " + device.FriendlyName, "UPnP.DeviceURN", device.DeviceURN);
                         if (!String.IsNullOrWhiteSpace(device.DeviceURN_Prefix))
@@ -955,7 +956,7 @@ namespace MIG.Interfaces.Protocols
             this.genericControlPoint.OnNotify -= this.SSDPNotifySink;
             this.deviceFactory.Shutdown();
             this.deviceFactory = null;
-            foreach (UPnPDevice dev in activeDeviceList) 
+            foreach (UPnPDevice dev in activeDeviceList)
             {
                 dev.Removed();
             }
