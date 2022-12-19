@@ -24,7 +24,7 @@ evtSource.onmessage = function(e) {
     newElement.innerHTML = "HTTP SSE: " + e.data;
     document.getElementById('eventList').appendChild(newElement);
 }
-
+/*
 // Listen for WebSocket events
 var exampleSocket = new WebSocket("ws://localhost:8181/events");
 exampleSocket.onmessage = function (e) {
@@ -42,7 +42,7 @@ setInterval(function(){
         console.log(res);
     });
 }, 3000);
-
+*/
 </script>
 
 </html>

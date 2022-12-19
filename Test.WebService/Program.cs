@@ -16,13 +16,7 @@
   limitations under the License.
 */
 
-using System;
-using System.IO;
-using System.Threading;
-using System.Xml.Serialization;
-
 using MIG;
-using MIG.Config;
 
 namespace Test.WebService
 {
