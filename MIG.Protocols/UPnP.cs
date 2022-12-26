@@ -21,24 +21,19 @@
  *     Project Homepage: https://github.com/genielabs/mig-service-dotnet
  */
 
-using OpenSource.UPnP;
-using OpenSource.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Dynamic;
-using System.IO;
+using System.Globalization;
 using System.Linq;
 using System.Net;
-using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using System.Threading;
+using System.Xml.Linq;
 using MIG.Config;
-using EventLogEntryType = OpenSource.Utilities.EventLogEntryType;
+using MIG.Utility;
+using OpenSource.UPnP;
+using OpenSource.Utilities;
 
 namespace MIG.Interfaces.Protocols
 {
@@ -49,7 +44,7 @@ namespace MIG.Interfaces.Protocols
         #region Private fields
 
         private UpnpSmartControlPoint controlPoint;
-        private bool isConnected = false;
+        private bool isConnected;
         private object deviceOperationLock = new object();
         private List<InterfaceModule> modules = new List<InterfaceModule>();
         //private UPnPDevice localDevice;
@@ -107,8 +102,8 @@ namespace MIG.Interfaces.Protocols
         {
             get
             {
-                string ifacedomain = this.GetType().Namespace.ToString();
-                ifacedomain = ifacedomain.Substring(ifacedomain.LastIndexOf(".") + 1) + "." + this.GetType().Name.ToString();
+                string ifacedomain = GetType().Namespace;
+                ifacedomain = ifacedomain.Substring(ifacedomain.LastIndexOf(".") + 1) + "." + GetType().Name;
                 return ifacedomain;
             }
         }
@@ -189,7 +184,7 @@ namespace MIG.Interfaces.Protocols
             var device = GetUpnpDevice(request.Address);
 
             Commands command;
-            Enum.TryParse<Commands>(request.Command.Replace(".", "_"), out command);
+            Enum.TryParse(request.Command.Replace(".", "_"), out command);
 
             // TODO: ??? Commands: SwitchPower, Dimming
 
@@ -200,7 +195,7 @@ namespace MIG.Interfaces.Protocols
                 {
                     bool commandValue = (command == Commands.Control_On ? true : false);
                     var newValue = new UPnPArgument("newTargetValue", commandValue);
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         newValue
                     };
                     InvokeUpnpDeviceService(device, "SwitchPower", "SetTarget", args);
@@ -213,14 +208,14 @@ namespace MIG.Interfaces.Protocols
             case Commands.Control_Level:
                 {
                     var newvalue = new UPnPArgument("NewLoadLevelTarget", (byte)uint.Parse(request.GetOption(0)));
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         newvalue
                     };
                     InvokeUpnpDeviceService(device, "Dimming", "SetLoadLevelTarget", args);
                     //
                     raiseEvent = true;
                     eventParameter = "Status.Level";
-                    eventValue = (double.Parse(request.GetOption(0)) / 100d).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    eventValue = (double.Parse(request.GetOption(0)) / 100d).ToString(CultureInfo.InvariantCulture);
                 }
                 break;
             case Commands.Control_Toggle:
@@ -243,7 +238,7 @@ namespace MIG.Interfaces.Protocols
                     var totalMatches = new UPnPArgument("TotalMatches", "");
                     var updateId = new UPnPArgument("UpdateID", "");
                     //
-                    InvokeUpnpDeviceService(device, "ContentDirectory", "Browse", new UPnPArgument[] {
+                    InvokeUpnpDeviceService(device, "ContentDirectory", "Browse", new [] {
                         objectId,
                         flags,
                         filter,
@@ -260,7 +255,7 @@ namespace MIG.Interfaces.Protocols
                     {
                         string ss = result.DataValue.ToString();
                         var item = XDocument.Parse(ss, LoadOptions.SetBaseUri).Descendants().Where(ii => ii.Name.LocalName == "item").First();
-                        returnValue = MIG.Utility.Serialization.JsonSerialize(item, true);
+                        returnValue = Serialization.JsonSerialize(item, true);
                     }
                     catch
                     {
@@ -336,7 +331,7 @@ namespace MIG.Interfaces.Protocols
                     var totalMatches = new UPnPArgument("TotalMatches", "");
                     var updateId = new UPnPArgument("UpdateID", "");
                     //
-                    InvokeUpnpDeviceService(device, "ContentDirectory", "Browse", new UPnPArgument[] {
+                    InvokeUpnpDeviceService(device, "ContentDirectory", "Browse", new [] {
                         objectId,
                         flags,
                         filter,
@@ -378,7 +373,7 @@ namespace MIG.Interfaces.Protocols
                     var transportState = new UPnPArgument("CurrentTransportState", "");
                     var transportStatus = new UPnPArgument("CurrentTransportStatus", "");
                     var currentSpeed = new UPnPArgument("CurrentSpeed", "");
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         instanceId,
                         transportState,
                         transportStatus,
@@ -407,7 +402,7 @@ namespace MIG.Interfaces.Protocols
                     var playMedium = new UPnPArgument("PlayMedium", "");
                     var recordMedium = new UPnPArgument("RecordMedium", "");
                     var writeStatus = new UPnPArgument("WriteStatus", "");
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         instanceId,
                         nrTracks,
                         mediaDuration,
@@ -425,9 +420,9 @@ namespace MIG.Interfaces.Protocols
                     jsonres += "\"NrTracks\" : \"" + nrTracks.DataValue + "\", ";
                     jsonres += "\"MediaDuration\" : \"" + mediaDuration.DataValue + "\", ";
                     jsonres += "\"CurrentURI\" : \"" + currentUri.DataValue + "\", ";
-                    jsonres += "\"CurrentURIMetaData\" : " + MIG.Utility.Serialization.JsonSerialize(GetJsonFromXmlItem(currentUriMetadata.DataValue.ToString())) + ", ";
+                    jsonres += "\"CurrentURIMetaData\" : " + Serialization.JsonSerialize(GetJsonFromXmlItem(currentUriMetadata.DataValue.ToString())) + ", ";
                     jsonres += "\"NextURI\" : \"" + nextUri.DataValue + "\", ";
-                    jsonres += "\"NextURIMetaData\" : " + MIG.Utility.Serialization.JsonSerialize(GetJsonFromXmlItem(nextUriMetadata.DataValue.ToString())) + ", ";
+                    jsonres += "\"NextURIMetaData\" : " + Serialization.JsonSerialize(GetJsonFromXmlItem(nextUriMetadata.DataValue.ToString())) + ", ";
                     jsonres += "\"PlayMedium\" : \"" + playMedium.DataValue + "\", ";
                     jsonres += "\"RecordMedium\" : \"" + recordMedium.DataValue + "\", ";
                     jsonres += "\"WriteStatus\" : \"" + writeStatus.DataValue + "\"";
@@ -447,7 +442,7 @@ namespace MIG.Interfaces.Protocols
                     var absoluteTime = new UPnPArgument("AbsTime", "");
                     var relativeCount = new UPnPArgument("RelCount", (uint)0);
                     var absoluteCount = new UPnPArgument("AbsCount", (uint)0);
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         instanceId,
                         currentTrack,
                         trackDuration,
@@ -463,7 +458,7 @@ namespace MIG.Interfaces.Protocols
                     string jsonres = "{";
                     jsonres += "\"Track\" : \"" + currentTrack.DataValue + "\",";
                     jsonres += "\"TrackDuration\" : \"" + trackDuration.DataValue + "\",";
-                    jsonres += "\"TrackMetaData\" : " + MIG.Utility.Serialization.JsonSerialize(GetJsonFromXmlItem(trackMetadata.DataValue.ToString())) + ",";
+                    jsonres += "\"TrackMetaData\" : " + Serialization.JsonSerialize(GetJsonFromXmlItem(trackMetadata.DataValue.ToString())) + ",";
                     jsonres += "\"TrackURI\" : \"" + trackUri.DataValue + "\",";
                     jsonres += "\"RelTime\" : \"" + relativeTime.DataValue + "\",";
                     jsonres += "\"AbsTime\" : \"" + absoluteTime.DataValue + "\",";
@@ -479,7 +474,7 @@ namespace MIG.Interfaces.Protocols
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var currentUri = new UPnPArgument("CurrentURI", request.GetOption(0));
                     var uriMetadata = new UPnPArgument("CurrentURIMetaData", "");
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         instanceId,
                         currentUri,
                         uriMetadata
@@ -491,7 +486,7 @@ namespace MIG.Interfaces.Protocols
                 {
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var speed = new UPnPArgument("Speed", "1");
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         instanceId,
                         speed
                     };
@@ -501,7 +496,7 @@ namespace MIG.Interfaces.Protocols
             case Commands.AvMedia_Pause:
                 {
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         instanceId
                     };
                     InvokeUpnpDeviceService(device, "AVTransport", "Pause", args);
@@ -512,7 +507,7 @@ namespace MIG.Interfaces.Protocols
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var unit = new UPnPArgument("Unit", "REL_TIME");
                     var target = new UPnPArgument("Target", request.GetOption(0));
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         instanceId,
                         unit,
                         target
@@ -523,7 +518,7 @@ namespace MIG.Interfaces.Protocols
             case Commands.AvMedia_Stop:
                 {
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         instanceId
                     };
                     InvokeUpnpDeviceService(device, "AVTransport", "Stop", args);
@@ -532,7 +527,7 @@ namespace MIG.Interfaces.Protocols
             case Commands.AvMedia_Prev:
                 {
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         instanceId
                     };
                     InvokeUpnpDeviceService(device, "AVTransport", "Previous", args);
@@ -541,7 +536,7 @@ namespace MIG.Interfaces.Protocols
             case Commands.AvMedia_Next:
                 {
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         instanceId
                     };
                     InvokeUpnpDeviceService(device, "AVTransport", "Next", args);
@@ -552,7 +547,7 @@ namespace MIG.Interfaces.Protocols
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var channel = new UPnPArgument("Channel", "Master");
                     var currentMute = new UPnPArgument("CurrentMute", "");
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         instanceId,
                         channel,
                         currentMute
@@ -566,7 +561,7 @@ namespace MIG.Interfaces.Protocols
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var channel = new UPnPArgument("Channel", "Master");
                     var mute = new UPnPArgument("DesiredMute", request.GetOption(0) == "1" ? true : false);
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         instanceId,
                         channel,
                         mute
@@ -579,7 +574,7 @@ namespace MIG.Interfaces.Protocols
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var channel = new UPnPArgument("Channel", "Master");
                     var currentVolume = new UPnPArgument("CurrentVolume", "");
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         instanceId,
                         channel,
                         currentVolume
@@ -593,7 +588,7 @@ namespace MIG.Interfaces.Protocols
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var channel = new UPnPArgument("Channel", "Master");
                     var volume = new UPnPArgument("DesiredVolume", UInt16.Parse(request.GetOption(0)));
-                    var args = new UPnPArgument[] {
+                    var args = new[] {
                         instanceId,
                         channel,
                         volume
@@ -688,7 +683,7 @@ namespace MIG.Interfaces.Protocols
         private string GetJsonFromXmlItem(String metadata)
         {
             var item = XDocument.Parse(metadata, LoadOptions.SetBaseUri).Descendants().Where(ii => ii.Name.LocalName == "item").First();
-            return MIG.Utility.Serialization.JsonSerialize(item, true);
+            return Serialization.JsonSerialize(item, true);
         }
 
         private UPnPDevice GetUpnpDevice(string deviceId)
@@ -729,34 +724,34 @@ namespace MIG.Interfaces.Protocols
             lock (deviceOperationLock)
             {
                 InterfaceModule module = new InterfaceModule();
-                module.Domain = this.Domain;
+                module.Domain = Domain;
                 module.Address = device.UniqueDeviceName;
                 module.Description = device.FriendlyName + " (" + device.ModelName + ")";
                 if (device.StandardDeviceType == "MediaRenderer")
                 {
-                    module.ModuleType = MIG.ModuleTypes.MediaReceiver;
+                    module.ModuleType = ModuleTypes.MediaReceiver;
                 }
                 else if (device.StandardDeviceType == "MediaServer")
                 {
-                    module.ModuleType = MIG.ModuleTypes.MediaTransmitter;
+                    module.ModuleType = ModuleTypes.MediaTransmitter;
                 }
                 else if (device.StandardDeviceType == "SwitchPower")
                 {
-                    module.ModuleType = MIG.ModuleTypes.Switch;
+                    module.ModuleType = ModuleTypes.Switch;
                 }
                 else if (device.StandardDeviceType == "BinaryLight")
                 {
-                    module.ModuleType = MIG.ModuleTypes.Light;
+                    module.ModuleType = ModuleTypes.Light;
                 }
                 else if (device.StandardDeviceType == "DimmableLight")
                 {
-                    module.ModuleType = MIG.ModuleTypes.Dimmer;
+                    module.ModuleType = ModuleTypes.Dimmer;
                 }
                 else
                 {
-                    module.ModuleType = MIG.ModuleTypes.Sensor;
+                    module.ModuleType = ModuleTypes.Sensor;
                 }
-                module.CustomData = new DeviceHolder() { Device = device, Initialized = false };
+                module.CustomData = new DeviceHolder { Device = device, Initialized = false };
                 modules.Add(module);
                 //
                 OnInterfacePropertyChanged(this.GetDomain(), "1", "DLNA/UPnP Controller", "Controller.Status", "Added node " + module.Description);
@@ -825,25 +820,25 @@ namespace MIG.Interfaces.Protocols
                         // TODO: the following events are HG specific and should be moved somehow into HG code
                         if (device.StandardDeviceType == "MediaRenderer")
                         {
-                            module.ModuleType = MIG.ModuleTypes.MediaReceiver;
+                            module.ModuleType = ModuleTypes.MediaReceiver;
                             OnInterfacePropertyChanged(this.GetDomain(), device.UniqueDeviceName, "UPnP " + device.FriendlyName, "Widget.DisplayModule", "homegenie/generic/mediareceiver");
                         }
                         else if (device.StandardDeviceType == "MediaServer")
                         {
-                            module.ModuleType = MIG.ModuleTypes.MediaTransmitter;
+                            module.ModuleType = ModuleTypes.MediaTransmitter;
                             OnInterfacePropertyChanged(this.GetDomain(), device.UniqueDeviceName, "UPnP " + device.FriendlyName, "Widget.DisplayModule", "homegenie/generic/mediaserver");
                         }
                         else if (device.StandardDeviceType == "SwitchPower")
                         {
-                            module.ModuleType = MIG.ModuleTypes.Switch;
+                            module.ModuleType = ModuleTypes.Switch;
                         }
                         else if (device.StandardDeviceType == "BinaryLight")
                         {
-                            module.ModuleType = MIG.ModuleTypes.Light;
+                            module.ModuleType = ModuleTypes.Light;
                         }
                         else if (device.StandardDeviceType == "DimmableLight")
                         {
-                            module.ModuleType = MIG.ModuleTypes.Dimmer;
+                            module.ModuleType = ModuleTypes.Dimmer;
                         }
                         else if (device.HasPresentation && device.PresentationURL != null)
                         {
@@ -935,34 +930,34 @@ namespace MIG.Interfaces.Protocols
 
         public UpnpSmartControlPoint()
         {
-            this.deviceFactory.OnDevice += this.DeviceFactoryCreationSink;
-            this.deviceLifeTimeClock.OnExpired += this.DeviceLifeTimeClockSink;
-            this.deviceUpdateClock.OnExpired += this.DeviceUpdateClockSink;
-            this.hostNetworkInfo = new NetworkInfo(new NetworkInfo.InterfaceHandler(this.NetworkInfoNewInterfaceSink));
-            this.hostNetworkInfo.OnInterfaceDisabled += this.NetworkInfoOldInterfaceSink;
-            this.genericControlPoint = new UPnPControlPoint(this.hostNetworkInfo);
-            this.genericControlPoint.OnSearch += this.UPnPControlPointSearchSink;
-            this.genericControlPoint.OnNotify += this.SSDPNotifySink;
-            this.genericControlPoint.FindDeviceAsync(searchFilter);
+            deviceFactory.OnDevice += DeviceFactoryCreationSink;
+            deviceLifeTimeClock.OnExpired += DeviceLifeTimeClockSink;
+            deviceUpdateClock.OnExpired += DeviceUpdateClockSink;
+            hostNetworkInfo = new NetworkInfo(NetworkInfoNewInterfaceSink);
+            hostNetworkInfo.OnInterfaceDisabled += NetworkInfoOldInterfaceSink;
+            genericControlPoint = new UPnPControlPoint(hostNetworkInfo);
+            genericControlPoint.OnSearch += UPnPControlPointSearchSink;
+            genericControlPoint.OnNotify += SSDPNotifySink;
+            genericControlPoint.FindDeviceAsync(searchFilter);
         }
 
         public void ShutDown()
         {
-            this.deviceFactory.OnDevice -= this.DeviceFactoryCreationSink;
-            this.deviceLifeTimeClock.OnExpired -= this.DeviceLifeTimeClockSink;
-            this.deviceUpdateClock.OnExpired -= this.DeviceUpdateClockSink;
-            this.hostNetworkInfo.OnInterfaceDisabled -= this.NetworkInfoOldInterfaceSink;
-            this.genericControlPoint.OnSearch -= this.UPnPControlPointSearchSink;
-            this.genericControlPoint.OnNotify -= this.SSDPNotifySink;
-            this.deviceFactory.Shutdown();
-            this.deviceFactory = null;
+            deviceFactory.OnDevice -= DeviceFactoryCreationSink;
+            deviceLifeTimeClock.OnExpired -= DeviceLifeTimeClockSink;
+            deviceUpdateClock.OnExpired -= DeviceUpdateClockSink;
+            hostNetworkInfo.OnInterfaceDisabled -= NetworkInfoOldInterfaceSink;
+            genericControlPoint.OnSearch -= UPnPControlPointSearchSink;
+            genericControlPoint.OnNotify -= SSDPNotifySink;
+            deviceFactory.Shutdown();
+            deviceFactory = null;
             foreach (UPnPDevice dev in activeDeviceList)
             {
                 dev.Removed();
             }
-            this.hostNetworkInfo = null;
-            this.genericControlPoint.Dispose();
-            this.genericControlPoint = null;
+            hostNetworkInfo = null;
+            genericControlPoint.Dispose();
+            genericControlPoint = null;
         }
 
         public ArrayList DeviceTable
@@ -974,11 +969,11 @@ namespace MIG.Interfaces.Protocols
         {
             add
             {
-                this.OnAddedDeviceEvent.Register(value);
+                OnAddedDeviceEvent.Register(value);
             }
             remove
             {
-                this.OnAddedDeviceEvent.UnRegister(value);
+                OnAddedDeviceEvent.UnRegister(value);
             }
         }
 
@@ -986,11 +981,11 @@ namespace MIG.Interfaces.Protocols
         {
             add
             {
-                this.OnDeviceExpiredEvent.Register(value);
+                OnDeviceExpiredEvent.Register(value);
             }
             remove
             {
-                this.OnDeviceExpiredEvent.UnRegister(value);
+                OnDeviceExpiredEvent.UnRegister(value);
             }
         }
 
@@ -998,11 +993,11 @@ namespace MIG.Interfaces.Protocols
         {
             add
             {
-                this.OnRemovedDeviceEvent.Register(value);
+                OnRemovedDeviceEvent.Register(value);
             }
             remove
             {
-                this.OnRemovedDeviceEvent.UnRegister(value);
+                OnRemovedDeviceEvent.UnRegister(value);
             }
         }
 
@@ -1010,56 +1005,56 @@ namespace MIG.Interfaces.Protocols
         {
             add
             {
-                this.OnUpdatedDeviceEvent.Register(value);
+                OnUpdatedDeviceEvent.Register(value);
             }
             remove
             {
-                this.OnUpdatedDeviceEvent.UnRegister(value);
+                OnUpdatedDeviceEvent.UnRegister(value);
             }
         }
 
         private void DeviceFactoryCreationSink(UPnPDeviceFactory sender, UPnPDevice device, Uri locationURL)
         {
             //Console.WriteLine("UPnPDevice[" + device.FriendlyName + "]@" + device.LocationURL + " advertised UDN[" + device.UniqueDeviceName + "]");
-            if (!this.deviceTable.Contains(device.UniqueDeviceName))
+            if (!deviceTable.Contains(device.UniqueDeviceName))
             {
                 EventLogger.Log(this, EventLogEntryType.Error, "UPnPDevice[" + device.FriendlyName + "]@" + device.LocationURL + " advertised UDN[" + device.UniqueDeviceName + "] in xml but not in SSDP");
             }
             else
             {
-                lock (this.deviceTableLock)
+                lock (deviceTableLock)
                 {
-                    DeviceInfo info2 = (DeviceInfo)this.deviceTable[device.UniqueDeviceName];
+                    DeviceInfo info2 = (DeviceInfo)deviceTable[device.UniqueDeviceName];
                     if (info2.Device != null)
                     {
                         EventLogger.Log(this, EventLogEntryType.Information, "Unexpected UPnP Device Creation: " + device.FriendlyName + "@" + device.LocationURL);
                         return;
                     }
-                    DeviceInfo info = (DeviceInfo)this.deviceTable[device.UniqueDeviceName];
+                    DeviceInfo info = (DeviceInfo)deviceTable[device.UniqueDeviceName];
                     info.Device = device;
-                    this.deviceTable[device.UniqueDeviceName] = info;
-                    this.deviceLifeTimeClock.Add(device.UniqueDeviceName, device.ExpirationTimeout);
-                    this.activeDeviceList.Add(device);
+                    deviceTable[device.UniqueDeviceName] = info;
+                    deviceLifeTimeClock.Add(device.UniqueDeviceName, device.ExpirationTimeout);
+                    activeDeviceList.Add(device);
                 }
-                this.OnAddedDeviceEvent.Fire(this, device);
+                OnAddedDeviceEvent.Fire(this, device);
             }
         }
 
         private void DeviceLifeTimeClockSink(LifeTimeMonitor sender, object obj)
         {
             DeviceInfo info;
-            lock (this.deviceTableLock)
+            lock (deviceTableLock)
             {
-                if (!this.deviceTable.ContainsKey(obj))
+                if (!deviceTable.ContainsKey(obj))
                 {
                     return;
                 }
-                info = (DeviceInfo)this.deviceTable[obj];
-                this.deviceTable.Remove(obj);
-                this.deviceUpdateClock.Remove(obj);
-                if (this.activeDeviceList.Contains(info.Device))
+                info = (DeviceInfo)deviceTable[obj];
+                deviceTable.Remove(obj);
+                deviceUpdateClock.Remove(obj);
+                if (activeDeviceList.Contains(info.Device))
                 {
-                    this.activeDeviceList.Remove(info.Device);
+                    activeDeviceList.Remove(info.Device);
                 }
                 else
                 {
@@ -1069,17 +1064,17 @@ namespace MIG.Interfaces.Protocols
             if (info.Device != null)
             {
                 info.Device.Removed();
-                this.OnDeviceExpiredEvent.Fire(this, info.Device);
+                OnDeviceExpiredEvent.Fire(this, info.Device);
             }
         }
 
         private void DeviceUpdateClockSink(LifeTimeMonitor sender, object obj)
         {
-            lock (this.deviceTableLock)
+            lock (deviceTableLock)
             {
-                if (this.deviceTable.ContainsKey(obj))
+                if (deviceTable.ContainsKey(obj))
                 {
-                    DeviceInfo info = (DeviceInfo)this.deviceTable[obj];
+                    DeviceInfo info = (DeviceInfo)deviceTable[obj];
                     if (info.PendingBaseURL != null)
                     {
                         info.BaseURL = info.PendingBaseURL;
@@ -1088,8 +1083,8 @@ namespace MIG.Interfaces.Protocols
                         info.LocalEP = info.PendingLocalEP;
                         info.NotifyTime = DateTime.Now;
                         info.Device.UpdateDevice(info.BaseURL, info.LocalEP.Address);
-                        this.deviceTable[obj] = info;
-                        this.deviceLifeTimeClock.Add(info.UDN, info.MaxAge);
+                        deviceTable[obj] = info;
+                        deviceLifeTimeClock.Add(info.UDN, info.MaxAge);
                     }
                 }
             }
@@ -1097,36 +1092,36 @@ namespace MIG.Interfaces.Protocols
 
         public UPnPDevice[] GetCurrentDevices()
         {
-            return (UPnPDevice[])this.activeDeviceList.ToArray(typeof(UPnPDevice));
+            return (UPnPDevice[])activeDeviceList.ToArray(typeof(UPnPDevice));
         }
 
         private void NetworkInfoNewInterfaceSink(NetworkInfo sender, IPAddress Intfce)
         {
-            if (this.genericControlPoint != null)
+            if (genericControlPoint != null)
             {
-                this.genericControlPoint.FindDeviceAsync(searchFilter);
+                genericControlPoint.FindDeviceAsync(searchFilter);
             }
         }
 
         private void NetworkInfoOldInterfaceSink(NetworkInfo sender, IPAddress Intfce)
         {
             ArrayList list = new ArrayList();
-            lock (this.deviceTableLock)
+            lock (deviceTableLock)
             {
-                foreach (UPnPDevice device in this.GetCurrentDevices())
+                foreach (UPnPDevice device in GetCurrentDevices())
                 {
                     if (device.InterfaceToHost.Equals(Intfce))
                     {
-                        list.Add(this.UnprotectedRemoveMe(device));
+                        list.Add(UnprotectedRemoveMe(device));
                     }
                 }
             }
             foreach (UPnPDevice device2 in list)
             {
-                this.OnRemovedDeviceEvent.Fire(this, device2);
+                OnRemovedDeviceEvent.Fire(this, device2);
                 device2.Removed();
             }
-            this.genericControlPoint.FindDeviceAsync(searchFilter);
+            genericControlPoint.FindDeviceAsync(searchFilter);
         }
 
         internal void RemoveMe(UPnPDevice _d)
@@ -1137,13 +1132,13 @@ namespace MIG.Interfaces.Protocols
             {
                 parentDevice = parentDevice.ParentDevice;
             }
-            lock (this.deviceTableLock)
+            lock (deviceTableLock)
             {
-                if (!this.deviceTable.ContainsKey(parentDevice.UniqueDeviceName))
+                if (!deviceTable.ContainsKey(parentDevice.UniqueDeviceName))
                 {
                     return;
                 }
-                device2 = this.UnprotectedRemoveMe(parentDevice);
+                device2 = UnprotectedRemoveMe(parentDevice);
             }
             if (device2 != null)
             {
@@ -1151,22 +1146,22 @@ namespace MIG.Interfaces.Protocols
             }
             if (device2 != null)
             {
-                this.OnRemovedDeviceEvent.Fire(this, device2);
+                OnRemovedDeviceEvent.Fire(this, device2);
             }
         }
 
         public void Rescan()
         {
-            lock (this.deviceTableLock)
+            lock (deviceTableLock)
             {
-                IDictionaryEnumerator enumerator = this.deviceTable.GetEnumerator();
+                IDictionaryEnumerator enumerator = deviceTable.GetEnumerator();
                 while (enumerator.MoveNext())
                 {
                     string key = (string)enumerator.Key;
-                    this.deviceLifeTimeClock.Add(key, 20);
+                    deviceLifeTimeClock.Add(key, 20);
                 }
             }
-            this.genericControlPoint.FindDeviceAsync(searchFilter);
+            genericControlPoint.FindDeviceAsync(searchFilter);
         }
 
         internal void SSDPNotifySink(IPEndPoint source, IPEndPoint local, Uri LocationURL, bool IsAlive, string USN, string SearchTarget, int MaxAge, HTTPMessage Packet)
@@ -1176,9 +1171,9 @@ namespace MIG.Interfaces.Protocols
             {
                 if (!IsAlive)
                 {
-                    lock (this.deviceTableLock)
+                    lock (deviceTableLock)
                     {
-                        device = this.UnprotectedRemoveMe(USN);
+                        device = UnprotectedRemoveMe(USN);
                     }
                     if (device != null)
                     {
@@ -1186,14 +1181,14 @@ namespace MIG.Interfaces.Protocols
                     }
                     if (device != null)
                     {
-                        this.OnRemovedDeviceEvent.Fire(this, device);
+                        OnRemovedDeviceEvent.Fire(this, device);
                     }
                 }
                 else
                 {
-                    lock (this.deviceTableLock)
+                    lock (deviceTableLock)
                     {
-                        if (!this.deviceTable.ContainsKey(USN))
+                        if (!deviceTable.ContainsKey(USN))
                         {
                             DeviceInfo info = new DeviceInfo();
                             info.Device = null;
@@ -1203,24 +1198,24 @@ namespace MIG.Interfaces.Protocols
                             info.MaxAge = MaxAge;
                             info.LocalEP = local;
                             info.SourceEP = source;
-                            this.deviceTable[USN] = info;
-                            this.deviceFactory.CreateDevice(info.BaseURL, info.MaxAge, IPAddress.Any, info.UDN);
+                            deviceTable[USN] = info;
+                            deviceFactory.CreateDevice(info.BaseURL, info.MaxAge, IPAddress.Any, info.UDN);
                         }
                         else
                         {
-                            DeviceInfo info2 = (DeviceInfo)this.deviceTable[USN];
+                            DeviceInfo info2 = (DeviceInfo)deviceTable[USN];
                             if (info2.Device != null)
                             {
                                 if (info2.BaseURL.Equals(LocationURL))
                                 {
-                                    this.deviceUpdateClock.Remove(info2);
+                                    deviceUpdateClock.Remove(info2);
                                     info2.PendingBaseURL = null;
                                     info2.PendingMaxAge = 0;
                                     info2.PendingLocalEP = null;
                                     info2.PendingSourceEP = null;
                                     info2.NotifyTime = DateTime.Now;
-                                    this.deviceTable[USN] = info2;
-                                    this.deviceLifeTimeClock.Add(info2.UDN, MaxAge);
+                                    deviceTable[USN] = info2;
+                                    deviceLifeTimeClock.Add(info2.UDN, MaxAge);
                                 }
                                 else if (info2.NotifyTime.AddSeconds(10.0).Ticks < DateTime.Now.Ticks)
                                 {
@@ -1228,8 +1223,8 @@ namespace MIG.Interfaces.Protocols
                                     info2.PendingMaxAge = MaxAge;
                                     info2.PendingLocalEP = local;
                                     info2.PendingSourceEP = source;
-                                    this.deviceTable[USN] = info2;
-                                    this.deviceUpdateClock.Add(info2.UDN, 3);
+                                    deviceTable[USN] = info2;
+                                    deviceUpdateClock.Add(info2.UDN, 3);
                                 }
                             }
                         }
@@ -1245,7 +1240,7 @@ namespace MIG.Interfaces.Protocols
             {
                 parentDevice = parentDevice.ParentDevice;
             }
-            return this.UnprotectedRemoveMe(parentDevice.UniqueDeviceName);
+            return UnprotectedRemoveMe(parentDevice.UniqueDeviceName);
         }
 
         internal UPnPDevice UnprotectedRemoveMe(string UDN)
@@ -1253,12 +1248,12 @@ namespace MIG.Interfaces.Protocols
             UPnPDevice device = null;
             try
             {
-                DeviceInfo info = (DeviceInfo)this.deviceTable[UDN];
+                DeviceInfo info = (DeviceInfo)deviceTable[UDN];
                 device = info.Device;
-                this.deviceTable.Remove(UDN);
-                this.deviceLifeTimeClock.Remove(info.UDN);
-                this.deviceUpdateClock.Remove(info);
-                this.activeDeviceList.Remove(device);
+                deviceTable.Remove(UDN);
+                deviceLifeTimeClock.Remove(info.UDN);
+                deviceUpdateClock.Remove(info);
+                activeDeviceList.Remove(device);
             }
             catch
             {
@@ -1268,9 +1263,9 @@ namespace MIG.Interfaces.Protocols
 
         private void UPnPControlPointSearchSink(IPEndPoint source, IPEndPoint local, Uri LocationURL, string USN, string SearchTarget, int MaxAge)
         {
-            lock (this.deviceTableLock)
+            lock (deviceTableLock)
             {
-                if (!this.deviceTable.ContainsKey(USN))
+                if (!deviceTable.ContainsKey(USN))
                 {
                     DeviceInfo info = new DeviceInfo();
                     info.Device = null;
@@ -1280,24 +1275,24 @@ namespace MIG.Interfaces.Protocols
                     info.MaxAge = MaxAge;
                     info.LocalEP = local;
                     info.SourceEP = source;
-                    this.deviceTable[USN] = info;
-                    this.deviceFactory.CreateDevice(info.BaseURL, info.MaxAge, IPAddress.Any, info.UDN);
+                    deviceTable[USN] = info;
+                    deviceFactory.CreateDevice(info.BaseURL, info.MaxAge, IPAddress.Any, info.UDN);
                 }
                 else
                 {
-                    DeviceInfo info2 = (DeviceInfo)this.deviceTable[USN];
+                    DeviceInfo info2 = (DeviceInfo)deviceTable[USN];
                     if (info2.Device != null)
                     {
                         if (info2.BaseURL.Equals(LocationURL))
                         {
-                            this.deviceUpdateClock.Remove(info2);
+                            deviceUpdateClock.Remove(info2);
                             info2.PendingBaseURL = null;
                             info2.PendingMaxAge = 0;
                             info2.PendingLocalEP = null;
                             info2.PendingSourceEP = null;
                             info2.NotifyTime = DateTime.Now;
-                            this.deviceTable[USN] = info2;
-                            this.deviceLifeTimeClock.Add(info2.UDN, MaxAge);
+                            deviceTable[USN] = info2;
+                            deviceLifeTimeClock.Add(info2.UDN, MaxAge);
                         }
                         else if (info2.NotifyTime.AddSeconds(10.0).Ticks < DateTime.Now.Ticks)
                         {
@@ -1305,7 +1300,7 @@ namespace MIG.Interfaces.Protocols
                             info2.PendingMaxAge = MaxAge;
                             info2.PendingLocalEP = local;
                             info2.PendingSourceEP = source;
-                            this.deviceUpdateClock.Add(info2.UDN, 3);
+                            deviceUpdateClock.Add(info2.UDN, 3);
                         }
                     }
                 }
