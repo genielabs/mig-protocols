@@ -811,7 +811,7 @@ namespace MIG.Interfaces.Protocols
                 for (int d = 0; d < modules.Count; d++)
                 {
                     var module = modules[d];
-                    var deviceHolder = module.CustomData as DeviceHolder;
+                    var deviceHolder = module.CustomData.Holder as DeviceHolder;
                     if (deviceHolder.Initialized)
                         continue;
                     deviceHolder.Initialized = true;
