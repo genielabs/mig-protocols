@@ -31,6 +31,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Xml.Linq;
 using MIG.Config;
+using MIG.Interfaces.HomeAutomation.Commons;
 using MIG.Utility;
 using OpenSource.UPnP;
 using OpenSource.Utilities;
@@ -48,12 +49,6 @@ namespace MIG.Interfaces.Protocols
         private object deviceOperationLock = new object();
         private List<InterfaceModule> modules = new List<InterfaceModule>();
         //private UPnPDevice localDevice;
-
-        private class DeviceHolder
-        {
-            public UPnPDevice Device;
-            public bool Initialized;
-        }
 
         #endregion
 
@@ -727,31 +722,39 @@ namespace MIG.Interfaces.Protocols
                 module.Domain = Domain;
                 module.Address = device.UniqueDeviceName;
                 module.Description = device.FriendlyName + " (" + device.ModelName + ")";
+                module.CustomData = new UpnpModuleData()
+                {
+                    Type = ModuleTypes.Generic,
+                    Holder =  new DeviceHolder
+                    {
+                        Device = device,
+                        Initialized = false
+                    }
+                };
                 if (device.StandardDeviceType == "MediaRenderer")
                 {
-                    module.ModuleType = ModuleTypes.MediaReceiver;
+                    module.CustomData.Type = ModuleTypes.MediaReceiver;
                 }
                 else if (device.StandardDeviceType == "MediaServer")
                 {
-                    module.ModuleType = ModuleTypes.MediaTransmitter;
+                    module.CustomData.Type = ModuleTypes.MediaTransmitter;
                 }
                 else if (device.StandardDeviceType == "SwitchPower")
                 {
-                    module.ModuleType = ModuleTypes.Switch;
+                    module.CustomData.Type = ModuleTypes.Switch;
                 }
                 else if (device.StandardDeviceType == "BinaryLight")
                 {
-                    module.ModuleType = ModuleTypes.Light;
+                    module.CustomData.Type = ModuleTypes.Light;
                 }
                 else if (device.StandardDeviceType == "DimmableLight")
                 {
-                    module.ModuleType = ModuleTypes.Dimmer;
+                    module.CustomData.Type = ModuleTypes.Dimmer;
                 }
                 else
                 {
-                    module.ModuleType = ModuleTypes.Sensor;
+                    module.CustomData.Type = ModuleTypes.Sensor;
                 }
-                module.CustomData = new DeviceHolder { Device = device, Initialized = false };
                 modules.Add(module);
                 //
                 OnInterfacePropertyChanged(this.GetDomain(), "1", "DLNA/UPnP Controller", "Controller.Status", "Added node " + module.Description);
@@ -820,25 +823,25 @@ namespace MIG.Interfaces.Protocols
                         // TODO: the following events are HG specific and should be moved somehow into HG code
                         if (device.StandardDeviceType == "MediaRenderer")
                         {
-                            module.ModuleType = ModuleTypes.MediaReceiver;
+                            module.CustomData.Type = ModuleTypes.MediaReceiver;
                             OnInterfacePropertyChanged(this.GetDomain(), device.UniqueDeviceName, "UPnP " + device.FriendlyName, "Widget.DisplayModule", "homegenie/generic/mediareceiver");
                         }
                         else if (device.StandardDeviceType == "MediaServer")
                         {
-                            module.ModuleType = ModuleTypes.MediaTransmitter;
+                            module.CustomData.Type = ModuleTypes.MediaTransmitter;
                             OnInterfacePropertyChanged(this.GetDomain(), device.UniqueDeviceName, "UPnP " + device.FriendlyName, "Widget.DisplayModule", "homegenie/generic/mediaserver");
                         }
                         else if (device.StandardDeviceType == "SwitchPower")
                         {
-                            module.ModuleType = ModuleTypes.Switch;
+                            module.CustomData.Type = ModuleTypes.Switch;
                         }
                         else if (device.StandardDeviceType == "BinaryLight")
                         {
-                            module.ModuleType = ModuleTypes.Light;
+                            module.CustomData.Type = ModuleTypes.Light;
                         }
                         else if (device.StandardDeviceType == "DimmableLight")
                         {
-                            module.ModuleType = ModuleTypes.Dimmer;
+                            module.CustomData.Type = ModuleTypes.Dimmer;
                         }
                         else if (device.HasPresentation && device.PresentationURL != null)
                         {
@@ -903,6 +906,18 @@ namespace MIG.Interfaces.Protocols
 
         #endregion
 
+    }
+    
+    public class DeviceHolder
+    {
+        public UPnPDevice Device;
+        public bool Initialized;
+    }
+
+    public class UpnpModuleData
+    {
+        public ModuleTypes Type = ModuleTypes.Generic;
+        public DeviceHolder Holder;
     }
 
     #region UpnpSmartControlPoint helper class

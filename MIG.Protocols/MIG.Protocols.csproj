@@ -21,7 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MIG" Version="1.2.3" />
+    <PackageReference Include="MIG" Version="1.2.8" />
+    <PackageReference Include="MIG.HomeAutomation" Version="1.2.5" />
     <PackageReference Include="UPnP" Version="1.1.3" />
   </ItemGroup>
 
