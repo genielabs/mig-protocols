@@ -468,7 +468,7 @@ namespace MIG.Interfaces.Protocols
                 {
                     var instanceId = new UPnPArgument("InstanceID", (uint)0);
                     var currentUri = new UPnPArgument("CurrentURI", request.GetOption(0));
-                    var uriMetadata = new UPnPArgument("CurrentURIMetaData", "");
+                    var uriMetadata = new UPnPArgument("CurrentURIMetaData", request.GetOption(1));
                     var args = new[] {
                         instanceId,
                         currentUri,
