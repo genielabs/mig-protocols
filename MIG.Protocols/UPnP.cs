@@ -45,6 +45,7 @@ namespace MIG.Interfaces.Protocols
         #region Private fields
 
         private UpnpSmartControlPoint controlPoint;
+        private UPnPControlPoint _uPnPControlPoint;
         private bool isConnected;
         private object deviceOperationLock = new object();
         private List<InterfaceModule> modules = new List<InterfaceModule>();
@@ -134,9 +135,9 @@ namespace MIG.Interfaces.Protocols
             if (controlPoint == null)
             {
                 controlPoint = new UpnpSmartControlPoint();
-                controlPoint.OnAddedDevice += controPoint_OnAddedDevice;
-                controlPoint.OnRemovedDevice += controPoint_OnRemovedDevice;
-                controlPoint.OnDeviceExpired += controPoint_OnDeviceExpired;
+                controlPoint.OnAddedDevice += controlPoint_OnAddedDevice;
+                controlPoint.OnRemovedDevice += controlPoint_OnRemovedDevice;
+                controlPoint.OnDeviceExpired += controlPoint_OnDeviceExpired;
                 isConnected = true;
             }
             OnInterfaceModulesChanged(this.GetDomain());
@@ -155,9 +156,9 @@ namespace MIG.Interfaces.Protocols
             */
             if (controlPoint != null)
             {
-                controlPoint.OnAddedDevice -= controPoint_OnAddedDevice;
-                controlPoint.OnRemovedDevice -= controPoint_OnRemovedDevice;
-                controlPoint.OnDeviceExpired -= controPoint_OnDeviceExpired;
+                controlPoint.OnAddedDevice -= controlPoint_OnAddedDevice;
+                controlPoint.OnRemovedDevice -= controlPoint_OnRemovedDevice;
+                controlPoint.OnDeviceExpired -= controlPoint_OnDeviceExpired;
                 controlPoint.ShutDown();
                 controlPoint = null;
             }
@@ -171,7 +172,7 @@ namespace MIG.Interfaces.Protocols
 
         public object InterfaceControl(MigInterfaceCommand request)
         {
-            object returnValue = null;
+            object returnValue = new ResponseStatus(Status.Ok);
             bool raiseEvent = false;
             string eventParameter = "Status.Unhandled";
             string eventValue = "";
@@ -348,9 +349,23 @@ namespace MIG.Interfaces.Protocols
                         foreach (var i in root.Elements())
                         {
                             string itemId = i.Attribute("id").Value;
-                            string itemTitle = i.Descendants().Where(n => n.Name.LocalName == "title").First().Value;
-                            string itemClass = i.Descendants().Where(n => n.Name.LocalName == "class").First().Value;
-                            jsonres += "{ \"Id\" : \"" + itemId + "\", \"Title\" : \"" + itemTitle.Replace("\"", "\\\"") + "\", \"Class\" : \"" + itemClass + "\" },\n";
+                            string itemTitle = i.Descendants().First(n => n.Name.LocalName == "title").Value;
+                            string itemClass = i.Descendants().First(n => n.Name.LocalName == "class").Value;
+                            var protocolInfo = i.Descendants().FirstOrDefault(n => n.Name.LocalName == "res");
+                            if ((itemClass.StartsWith("object.item.videoItem") || itemClass.StartsWith("object.item.audioItem") || itemClass.StartsWith("object.item.imageItem")) && protocolInfo.Attribute("protocolInfo") != null)
+                            {
+
+                                string itemProtocolInfo = "";
+                                if (protocolInfo.Attribute("protocolInfo") != null)
+                                {
+                                    itemProtocolInfo = protocolInfo.Attribute("protocolInfo").Value;
+                                }
+                                jsonres += "{ \"Id\": \"" + itemId + "\", \"Title\": \"" + itemTitle.Replace("\"", "\\\"") + "\", \"Class\": \"" + itemClass + "\", \"ProtocolInfo\": \"" + itemProtocolInfo + "\" },\n";
+                            }
+                            else
+                            {
+                                jsonres += "{ \"Id\": \"" + itemId + "\", \"Title\": \"" + itemTitle.Replace("\"", "\\\"") + "\", \"Class\": \"" + itemClass + "\" },\n";
+                            }
                         }
                         jsonres = jsonres.TrimEnd(',', '\n') + "]";
                         //
@@ -706,7 +721,7 @@ namespace MIG.Interfaces.Protocols
             }
         }
 
-        private void controPoint_OnAddedDevice(UpnpSmartControlPoint sender, UPnPDevice device)
+        private void controlPoint_OnAddedDevice(UpnpSmartControlPoint sender, UPnPDevice device)
         {
             if (String.IsNullOrWhiteSpace(device.StandardDeviceType))
                 return;
@@ -762,7 +777,7 @@ namespace MIG.Interfaces.Protocols
             OnInterfaceModulesChanged(this.GetDomain());
         }
 
-        private void controPoint_OnRemovedDevice(UpnpSmartControlPoint sender, UPnPDevice device)
+        private void controlPoint_OnRemovedDevice(UpnpSmartControlPoint sender, UPnPDevice device)
         {
             lock (deviceOperationLock)
             {
@@ -776,7 +791,7 @@ namespace MIG.Interfaces.Protocols
             }
         }
 
-        private void controPoint_OnDeviceExpired(UpnpSmartControlPoint sender, UPnPDevice device)
+        private void controlPoint_OnDeviceExpired(UpnpSmartControlPoint sender, UPnPDevice device)
         {
             lock (deviceOperationLock)
             {
@@ -942,22 +957,32 @@ namespace MIG.Interfaces.Protocols
         private WeakEvent OnUpdatedDeviceEvent = new WeakEvent();
         private string searchFilter = "upnp:rootdevice";
         //"ssdp:all"; //
+        private System.Timers.Timer searchInterval;
 
         public UpnpSmartControlPoint()
         {
             deviceFactory.OnDevice += DeviceFactoryCreationSink;
             deviceLifeTimeClock.OnExpired += DeviceLifeTimeClockSink;
             deviceUpdateClock.OnExpired += DeviceUpdateClockSink;
+
             hostNetworkInfo = new NetworkInfo(NetworkInfoNewInterfaceSink);
             hostNetworkInfo.OnInterfaceDisabled += NetworkInfoOldInterfaceSink;
+
             genericControlPoint = new UPnPControlPoint(hostNetworkInfo);
             genericControlPoint.OnSearch += UPnPControlPointSearchSink;
             genericControlPoint.OnNotify += SSDPNotifySink;
             genericControlPoint.FindDeviceAsync(searchFilter);
+            
+            searchInterval = new System.Timers.Timer();
+            searchInterval.Interval = 10000;
+            searchInterval.Elapsed += (sender, args) => Rescan();
+            searchInterval.Enabled = true;
         }
 
         public void ShutDown()
         {
+            searchInterval.Enabled = false;
+            searchInterval.Dispose();
             deviceFactory.OnDevice -= DeviceFactoryCreationSink;
             deviceLifeTimeClock.OnExpired -= DeviceLifeTimeClockSink;
             deviceUpdateClock.OnExpired -= DeviceUpdateClockSink;
@@ -1167,16 +1192,20 @@ namespace MIG.Interfaces.Protocols
 
         public void Rescan()
         {
-            lock (deviceTableLock)
+            Hashtable ht = (Hashtable)this.deviceTable.Clone();
+            lock (this.deviceTableLock)
             {
-                IDictionaryEnumerator enumerator = deviceTable.GetEnumerator();
+                IDictionaryEnumerator enumerator = ht.GetEnumerator();
                 while (enumerator.MoveNext())
                 {
                     string key = (string)enumerator.Key;
                     deviceLifeTimeClock.Add(key, 20);
                 }
             }
-            genericControlPoint.FindDeviceAsync(searchFilter);
+            if (genericControlPoint != null)
+            {
+                genericControlPoint.FindDeviceAsync(searchFilter);
+            }
         }
 
         internal void SSDPNotifySink(IPEndPoint source, IPEndPoint local, Uri LocationURL, bool IsAlive, string USN, string SearchTarget, int MaxAge, HTTPMessage Packet)
