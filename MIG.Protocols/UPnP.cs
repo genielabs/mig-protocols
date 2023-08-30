@@ -957,7 +957,6 @@ namespace MIG.Interfaces.Protocols
         private WeakEvent OnUpdatedDeviceEvent = new WeakEvent();
         private string searchFilter = "upnp:rootdevice";
         //"ssdp:all"; //
-        private System.Timers.Timer searchInterval;
 
         public UpnpSmartControlPoint()
         {
@@ -972,17 +971,10 @@ namespace MIG.Interfaces.Protocols
             genericControlPoint.OnSearch += UPnPControlPointSearchSink;
             genericControlPoint.OnNotify += SSDPNotifySink;
             genericControlPoint.FindDeviceAsync(searchFilter);
-            
-            searchInterval = new System.Timers.Timer();
-            searchInterval.Interval = 10000;
-            searchInterval.Elapsed += (sender, args) => Rescan();
-            searchInterval.Enabled = true;
         }
 
         public void ShutDown()
         {
-            searchInterval.Enabled = false;
-            searchInterval.Dispose();
             deviceFactory.OnDevice -= DeviceFactoryCreationSink;
             deviceLifeTimeClock.OnExpired -= DeviceLifeTimeClockSink;
             deviceUpdateClock.OnExpired -= DeviceUpdateClockSink;
