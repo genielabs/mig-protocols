@@ -733,46 +733,54 @@ namespace MIG.Interfaces.Protocols
 
             lock (deviceOperationLock)
             {
-                InterfaceModule module = new InterfaceModule();
-                module.Domain = Domain;
-                module.Address = device.UniqueDeviceName;
-                module.Description = device.FriendlyName + " (" + device.ModelName + ")";
-                module.CustomData = new UpnpModuleData()
+
+                var module = modules.Find(m => m.Address == device.UniqueDeviceName);
+                if (module == null)
                 {
-                    Type = ModuleTypes.Generic,
-                    Holder =  new DeviceHolder
+                    module = new InterfaceModule
                     {
-                        Device = device,
-                        Initialized = false
+                        Domain = Domain,
+                        Address = device.UniqueDeviceName,
+                        Description = device.FriendlyName + " (" + device.ModelName + ")",
+                        CustomData = new UpnpModuleData()
+                        {
+                            Type = ModuleTypes.Generic,
+                            Holder =  new DeviceHolder
+                            {
+                                Device = device,
+                                Initialized = false
+                            }
+                        }
+                    };
+                    if (device.StandardDeviceType == "MediaRenderer")
+                    {
+                        module.CustomData.Type = ModuleTypes.MediaReceiver;
                     }
-                };
-                if (device.StandardDeviceType == "MediaRenderer")
-                {
-                    module.CustomData.Type = ModuleTypes.MediaReceiver;
+                    else if (device.StandardDeviceType == "MediaServer")
+                    {
+                        module.CustomData.Type = ModuleTypes.MediaTransmitter;
+                    }
+                    else if (device.StandardDeviceType == "SwitchPower")
+                    {
+                        module.CustomData.Type = ModuleTypes.Switch;
+                    }
+                    else if (device.StandardDeviceType == "BinaryLight")
+                    {
+                        module.CustomData.Type = ModuleTypes.Light;
+                    }
+                    else if (device.StandardDeviceType == "DimmableLight")
+                    {
+                        module.CustomData.Type = ModuleTypes.Dimmer;
+                    }
+                    else
+                    {
+                        module.CustomData.Type = ModuleTypes.Sensor;
+                    }
+                    modules.Add(module);
                 }
-                else if (device.StandardDeviceType == "MediaServer")
-                {
-                    module.CustomData.Type = ModuleTypes.MediaTransmitter;
-                }
-                else if (device.StandardDeviceType == "SwitchPower")
-                {
-                    module.CustomData.Type = ModuleTypes.Switch;
-                }
-                else if (device.StandardDeviceType == "BinaryLight")
-                {
-                    module.CustomData.Type = ModuleTypes.Light;
-                }
-                else if (device.StandardDeviceType == "DimmableLight")
-                {
-                    module.CustomData.Type = ModuleTypes.Dimmer;
-                }
-                else
-                {
-                    module.CustomData.Type = ModuleTypes.Sensor;
-                }
-                modules.Add(module);
                 //
                 OnInterfacePropertyChanged(this.GetDomain(), "1", "DLNA/UPnP Controller", "Controller.Status", "Added node " + module.Description);
+                OnInterfacePropertyChanged(this.GetDomain(), device.UniqueDeviceName, "Node added " + device.FriendlyName, "UPnP.Status", "online");
             }
             OnInterfaceModulesChanged(this.GetDomain());
         }
@@ -785,7 +793,8 @@ namespace MIG.Interfaces.Protocols
                 if (module != null)
                 {
                     OnInterfacePropertyChanged(this.GetDomain(), "1", "DLNA/UPnP Controller", "Controller.Status", "Removed node " + module.Description);
-                    modules.Remove(module);
+                    OnInterfacePropertyChanged(this.GetDomain(), device.UniqueDeviceName, "Node removed " + device.FriendlyName, "UPnP.Status", "offline");
+                    //modules.Remove(module);
                     OnInterfaceModulesChanged(this.GetDomain());
                 }
             }
@@ -798,8 +807,9 @@ namespace MIG.Interfaces.Protocols
                 var module = modules.Find(m => m.Address == device.UniqueDeviceName);
                 if (module != null)
                 {
-                    OnInterfacePropertyChanged(this.GetDomain(), "1", "DLNA/UPnP Controller", "Controller.Status", "Removed node " + module.Description);
-                    modules.Remove(module);
+                    OnInterfacePropertyChanged(this.GetDomain(), "1", "DLNA/UPnP Controller", "Controller.Status", "Node expired " + module.Description);
+                    OnInterfacePropertyChanged(this.GetDomain(), device.UniqueDeviceName, "Node expired " + device.FriendlyName, "UPnP.Status", "expired");
+                    //modules.Remove(module);
                     OnInterfaceModulesChanged(this.GetDomain());
                 }
             }
@@ -1182,7 +1192,7 @@ namespace MIG.Interfaces.Protocols
             }
         }
 
-        public void Rescan()
+        public void Rescan(string filter = null)
         {
             Hashtable ht = (Hashtable)this.deviceTable.Clone();
             lock (this.deviceTableLock)
@@ -1196,7 +1206,7 @@ namespace MIG.Interfaces.Protocols
             }
             if (genericControlPoint != null)
             {
-                genericControlPoint.FindDeviceAsync(searchFilter);
+                genericControlPoint.FindDeviceAsync(filter != null ? filter : searchFilter);
             }
         }
 
