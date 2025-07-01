@@ -723,8 +723,9 @@ namespace MIG.Interfaces.Protocols
 
         private void controlPoint_OnAddedDevice(UpnpSmartControlPoint sender, UPnPDevice device)
         {
-            if (String.IsNullOrWhiteSpace(device.StandardDeviceType))
-                return;
+            // TODO: check if commenting this results in more devices discovered
+            //if (String.IsNullOrWhiteSpace(device.StandardDeviceType))
+            //    return;
 
             //foreach (UPnPService s in device.Services)
             //{
@@ -871,7 +872,6 @@ namespace MIG.Interfaces.Protocols
                         else if (device.HasPresentation && device.PresentationURL != null)
                         {
                             OnInterfacePropertyChanged(this.GetDomain(), device.UniqueDeviceName, "UPnP " + device.FriendlyName, "Widget.DisplayModule", "homegenie/generic/link");
-                            OnInterfacePropertyChanged(this.GetDomain(), device.UniqueDeviceName, "UPnP " + device.FriendlyName, "FavouritesLink.Url", device.PresentationURL);
                         }
                         if (!String.IsNullOrWhiteSpace(device.DeviceURN))
                             OnInterfacePropertyChanged(this.GetDomain(), device.UniqueDeviceName, "UPnP " + device.FriendlyName, "UPnP.DeviceURN", device.DeviceURN);
