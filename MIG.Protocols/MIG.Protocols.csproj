@@ -2,7 +2,7 @@
   <PropertyGroup>
     <PackageId>MIG.Protocols</PackageId>
     <Title>Protocols Interface (UPnP)</Title>
-    <Version>1.1.0</Version>
+    <Version>1.3.0</Version>
     <Authors>Generoso Martello</Authors>
     <Company>G-Labs</Company>
     <Description>Interface for MIG service that adds commands for controlling UPnP devices.</Description>
@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MIG" Version="1.2.21" />
-    <PackageReference Include="MIG.HomeAutomation" Version="1.2.26" />
+    <PackageReference Include="MIG" Version="1.3.1" />
+    <PackageReference Include="MIG.HomeAutomation" Version="1.3.0" />
     <PackageReference Include="UPnP" Version="1.1.6" />
   </ItemGroup>
 
