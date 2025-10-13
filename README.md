@@ -7,7 +7,11 @@
 *[MIG](https://github.com/genielabs/mig-service-dotnet)* Interface for various media control protocols.
 
 Implemented API:
-- [Protocols.UPnP](https://genielabs.github.io/HomeGenie/api/mig/mig_api_upnp.html)
+- Protocols.UPnP
+
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/genielabs/mig-protocols)
+
 
 ## Supported Devices
 
